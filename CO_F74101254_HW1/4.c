@@ -12,36 +12,31 @@ int *p_x = &x[0] ;
 int *p_h = &h[0] ;
 int *p_y = &y[0] ;
 asm volatile(
-    "li t0, 0\n" // Initialize the output value to 0
-    "li t1, 0\n" // Initialize the loop counter to 0
-    "li t2, 0\n" // Initialize the row counter to 0
-   
-    "outer_loop:\n"
-    "beq t2, 3, end_outer_loop\n" // Exit the loop when all rows have been processed
-    "li t1, 0\n" // Reset the loop counter for each new row
-
-    "inner_loop:\n"
-    "beq t1, 3, end_inner_loop\n" // Exit the loop when all columns have been processed
-    "slli t3, t1, 2\n" // Calculate the memory offset for the current column
-    "add t3, t2, t3\n"
-    "lw a0, %0(t3)\n" // Load the current value from matrix h
-    "slli t3, t1, 2\n" // Calculate the memory offset for the current column of x
-    "lw a1, %1(t3)\n" // Load the current value from matrix x
-    "mul a0, a0, a1\n" // Multiply the values
-    "add t0, t0, a0\n" // Accumulate the result
-    "addi t1, t1, 1\n" // Increment the loop counter
-    "j inner_loop\n" // Repeat the loop for the remaining columns
-
+    "li x18, 0\n" 					// Initialize the loop counter to 0
+    "outer_loop:\n\t"
+    "	li x19, 0\n" 					// Initialize the row counter to 0 
+    "	bge x18, %[max], end_outer_loop\n\t" 		// Exit the loop when all rows have been processed
+    "	li x22, 0\n"					// Initialize the output to 0 
+    "	add %[x], x0, %[Xi]\n\t"			// x[i]
+    "inner_loop:\n\t"
+    "	lw x20, 0(%[h])\n\t"				// load *p_h 
+    "	lw x21, 0(%[x])\n\t"				// load *p_x
+    "	mul x20, x20, x21\n\t"				// multiply	
+    "	add x22, x22, x20\n\t"   			// add the result to p_y    
+    "	addi %[h], %[h], 4\n\t"			// p_h ++
+    "	addi %[x], %[x], 4\n\t"			// p_x ++
+    "	addi x19, x19, 1\n\t"				// row couter ++
+    "	bge x19, %[max], end_inner_loop\n" 		// Exit the loop when all columns have been processed
+    "	beq x0, x0, inner_loop\n\t" 			// keep doing the inner loop 
     "end_inner_loop:\n"
-    "slli t3, t2, 2\n" // Calculate the memory offset for the current row of y
-    "sw t0, %2(t3)\n" // Store the accumulated result in the output matrix
-    "addi t2, t2, 1\n" // Increment the row counter
-    "j outer_loop\n" // Repeat the loop for the remaining rows
-
-    "end_outer_loop:\n"
-    :
-    : "r" (p_h), "r" (p_x), "r" (p_y)
-    : "a0", "a1", "t0", "t1", "t2", "t3"
+    "	sw x22, 0(%[y])\n\t" 				// Store the result in the output matrix
+    "	addi %[y], %[y], 4\n\t"				// p_y ++
+    "	addi x18, x18, 1\n\t" 				// Increment the loop counter
+    "	beq x0, x0, outer_loop\n\t"			// run the outer_loop	
+    "end_outer_loop:\n\t"
+    : [h] "+r" (p_h), [x] "+r" (p_x), [y] "+r" (p_y)
+    : [max] "r"(3), [Xi] "r"(&x[0])
+    : "x18", "x19", "x20", "x21", "x22"
 );
 p_y = &y[0];
 for(i = 0; i<3; i++)

@@ -18,16 +18,17 @@ for (int i = 0; i < arr_size; i++){
 */
 for (int i = 0; i < arr_size; i++){
     asm volatile(
-        "lw t0, 0(%0)\n"   // load a[i] into t0
-        "lw t1, 0(%1)\n"   // load b[i] into t1
-        "div t2, t0, t1\n" // divide t0 by t1 and store the result in t2
-        "sw t2, 0(%2)\n"   // store the result in c[i]
+        "lw x18, 0(%0)\n\t"	// load a[i] into x18
+        "lw x19, 0(%1)\n\t"	// load b[i] into x19
+        "lw x20, 0(%2)\n\t"	// load c[i] into x20
+        "div x20, x18, x19\n" // divide x18 by x19 and store the result in x20
+        "sw x20, 0(%2)\n"   // store the result in c[i]
         "addi %0, %0, 4\n" // increment p_a by 4
         "addi %1, %1, 4\n" // increment p_b by 4
         "addi %2, %2, 4\n" // increment p_c by 4
+        : "+r"(p_a), "+r"(p_b), "+r"(p_c)
         :
-        : "r"(p_a), "r"(p_b), "r"(p_c)
-        : "t0", "t1", "t2"
+        : "x18", "x19", "x20"
     );
 }
 p_c = &c[0];

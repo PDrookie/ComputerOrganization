@@ -9,7 +9,8 @@ int main()
     //a = a / b	
     asm volatile(
 		"div %[a], %[a], %[b]\n\t"	//AssemblerTemplate
-		:[a] "+r"(a)			//OutputOperands, "=r" means write-only, "+r" means read/write
+		:[a] "+r"(a)			//OutputOperands
+						//"=r" means write-only, "+r" means read/write
 		:[b] "r"(b)			//InputOperands 
 	);
     printf("%d\n", a);

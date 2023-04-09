@@ -15,18 +15,25 @@ int main()
 	{
 	p_x = &x[0] ;
 	for (f = 0 ; f < 3; f++){
-		asm volatile(
-			"lw a0, %0\n\t"    	// load *p_h to a0
-        		"lw a1, %1\n\t"    	// load *p_x to a1
-			"mul a0, a0, a1\n\t"   // multiply
-			"lw a2, %2\n\t"    	// load *p_y to a2
-        		"add a2, a2, a0\n\t"   // add result to *p_y
-        		"sw a2, %2\n\t"    	// store result to *p_y
-        		:
-        		: "m"(*p_h++), "m"(*p_x++), "m"(*p_y++)
-        		: "a0", "a1", "a2"
-        	);
-		}
+           asm volatile(
+                "lw x18, 0(%[x])\n\t"   	// load *p_h 
+                "lw x19, 0(%[h])\n\t"  	// load *p_x               
+                "lw x20, 0(%[y])\n\t"		// load *p_y
+                "mul x18, x18, x19\n\t"   	// multiply
+                "add x20, x20, x18\n\t"   	// add result to *p_y
+                "sw x20, 0(%[y])\n\t"   	// store result to *p_y
+                "addi %[x], %[x], 4\n\t"	//p_x ++
+                "addi %[h], %[h], 4\n\t"	//p_h ++
+                "beq %[f], %[max], KeepLooping\n\t"	//check the loop
+                "beq x0, x0, End\n\t" 	
+                "KeepLooping:\n\t"
+                "	addi %[y], %[y], 4\n\t"
+                "End:\n\t"
+                : [x] "+r"(p_x), [h]"+r"(p_h), [y]"+r"(p_y)
+                : [f] "r"(f), [max] "r"(2)
+                : "x18", "x19", "x20"
+            );
+	}
 	}
 	p_y = &y[0];
 	for(i = 0; i<3; i++)
